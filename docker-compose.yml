@@ -1,0 +1,6 @@
+jruby:
+  build: .
+  volumes:
+    - ./:/lmlogs
+  command:
+    - sh
