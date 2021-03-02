@@ -28,8 +28,7 @@ output {
 
 | Option                     | Description                                                                         | Default         |
 |----------------------------|-------------------------------------------------------------------------------------|-----------------|
-| batch_size				 | Event batch size to send to LM Logs. Increasing the batch size can increase		   | 100			 | 
-|							 |	throughput by reducing HTTP overhead											   |                 |
+| batch_size				 | Event batch size to send to LM Logs. 											   | 100			 | 
 | message_key                | Key that will be used by the plugin as the system key                               | "message"       |
 | lm_property                | Key that will be used by LM to match resource based on property                     |"system.hostname"|
 | keep_timestamp             | If false, LM Logs will use the ingestion timestamp as the event timestamp           | true            |
