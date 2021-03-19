@@ -157,24 +157,6 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     @client.close
   end
 
-  def flatten(data, prefix)
-    ret = {}
-    if data.is_a? Hash
-      data.each { |key, value|
-        if prefix.to_s.empty?
-          ret.merge! flatten(value, "#{key.to_s}")
-        else
-          ret.merge! flatten(value, "#{prefix}__#{key.to_s}")
-        end
-      }
-    elsif data.is_a? Array
-      data.each_with_index {|val,index | ret.merge! flatten(val, "#{prefix}__#{index}")}
-    else
-      return {prefix => data.to_s}
-    end
-
-    ret
-  end
 
   def generate_auth_string(body)
     timestamp = DateTime.now.strftime('%Q')
@@ -263,23 +245,19 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
           message: event.get(@message_key).to_s
         }
 
-        metadata = event.to_hash
         lmlogs_event["_lm.resourceId"] = {}
         lmlogs_event["_lm.resourceId"]["#{@lm_property}"] = event.get(@property_key.to_s)
 
         if @keep_timestamp
           lmlogs_event["timestamp"] = event.get("@timestamp")
-          metadata.delete("@timestamp")
         end
         
         if @timestamp_is_key
           lmlogs_event["timestamp"] = event.get(@timestamp_key.to_s)
         end
 
-        metadata.delete(@property_key)
-        metadata.delete(@message_key)
 
-        lmlogs_event["metadata"]=flatten(metadata,"")
+
 
 
         documents.push(lmlogs_event)
