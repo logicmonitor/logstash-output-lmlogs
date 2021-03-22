@@ -96,6 +96,8 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   # Password to use for HTTP auth
   config :access_key, :validate => :password, :required => true
 
+  @@MAX_PAYLOAD_SIZE = 8*1024*1024
+
   public
   def register
     @total = 0
@@ -178,7 +180,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
         :body => body,
         :headers => {
                 "Content-Type" => "application/json",
-                "User-Agent" => "LM Logs Fluentd Plugin",
+                "User-Agent" => "LM Logs Logstash Plugin",
                 "Authorization" => "#{auth_string}"
         }
     })
@@ -234,6 +236,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
 
   public
   def multi_receive(events)
+    puts @@MAX_PAYLOAD_SIZE
     if debug
       puts events.to_json
     end
@@ -256,11 +259,8 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
           lmlogs_event["timestamp"] = event.get(@timestamp_key.to_s)
         end
 
+        documents = isValidPayloadSize(documents,lmlogs_event,@@MAX_PAYLOAD_SIZE)
 
-
-
-
-        documents.push(lmlogs_event)
       end
       send_batch(documents)
     end
@@ -268,5 +268,15 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
 
   def log_failure(message, opts)
     @logger.error("[HTTP Output Failure] #{message}", opts)
+  end
+
+  def isValidPayloadSize(documents,lmlogs_event,max_payload_size)
+    if (documents.to_json.bytesize + lmlogs_event.to_json.bytesize) >  max_payload_size 
+          send_batch(documents)
+          documents = []
+          
+    end
+    documents.push(lmlogs_event)
+    return documents
   end
 end # class LogStash::Outputs::LMLogs
