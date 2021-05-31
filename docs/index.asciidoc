@@ -116,8 +116,8 @@ Keep logstash timestamp
   * Default value is `false`
 
 
-[id="plugins-{type}s-{plugin}-timestamp_is_key"]
-===== `timestamp_is_key`
+[id="plugins-{type}s-{plugin}-timestamp_key"]
+===== `timestamp_key`
 
   * Value type is <<string,string>>
   * Default value is `logtimestamp`
