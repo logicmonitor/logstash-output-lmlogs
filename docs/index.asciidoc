@@ -1,0 +1,275 @@
+:plugin: lmlogs
+:type: output
+:default_codec: plain
+
+///////////////////////////////////////////
+START - GENERATED VARIABLES, DO NOT EDIT!
+///////////////////////////////////////////
+:version: %VERSION%
+:release_date: %RELEASE_DATE%
+:changelog_url: %CHANGELOG_URL%
+:include_path: ../../../../logstash/docs/include
+///////////////////////////////////////////
+END - GENERATED VARIABLES, DO NOT EDIT!
+///////////////////////////////////////////
+
+[id="plugins-{type}s-{plugin}"]
+
+=== lmlogs output plugin
+
+include::{include_path}/plugin_header.asciidoc[]
+
+==== Description
+Got a Logicmonitor account? Use logstash to ship logs to Logicmonitor lmlogs !
+
+This is most useful so you can use logstash to parse and structure your logs and ship to your Logicmonitor account.
+
+[id="plugins-{type}s-{plugin}-options"]
+==== lmlogs Output Configuration Options
+
+This plugin supports the following configuration options plus the <<plugins-{type}s-{plugin}-common-options>> described later.
+
+[cols="<,<,<",options="header",]
+|=======================================================================
+|Setting |Input type|Required
+| <<plugins-{type}s-{plugin}-batch_size>> |<<number,number>>|No
+| <<plugins-{type}s-{plugin}-message_key>> |<<string,string>>|No
+| <<plugins-{type}s-{plugin}-property_key>> |<<string,string>>|No
+| <<plugins-{type}s-{plugin}-lm_property>> |<<string,string>>|No
+| <<plugins-{type}s-{plugin}-keep_timestamp>> |<<boolean,boolean>>|No
+| <<plugins-{type}s-{plugin}-timestamp_is_key>> |<<boolean,boolean>>|No
+| <<plugins-{type}s-{plugin}-timestamp_key>> |<<string,string>>|No
+| <<plugins-{type}s-{plugin}-debug>> |<<boolean,boolean>>|No
+| <<plugins-{type}s-{plugin}-request_timeout>> |<<number,number>>|No
+| <<plugins-{type}s-{plugin}-socket_timeout>> |<<number,number>>|No
+| <<plugins-{type}s-{plugin}-connect_timeout>> |<<number,number>>|No
+| <<plugins-{type}s-{plugin}-follow_redirects>> |<<boolean,boolean>>|No
+| <<plugins-{type}s-{plugin}-pool_max>> |<<number,number>>|No
+| <<plugins-{type}s-{plugin}-pool_max_per_route>> |<<number,number>>|No
+| <<plugins-{type}s-{plugin}-keepalive>> |<<boolean,boolean>>|No
+| <<plugins-{type}s-{plugin}-automatic_retries>> |<<number,number>>|No
+| <<plugins-{type}s-{plugin}-retry_non_idempotent>> |<<boolean,boolean>>|No
+| <<plugins-{type}s-{plugin}-validate_after_inactivity>> |<<number,number>>|No
+| <<plugins-{type}s-{plugin}-cookies>> |<<boolean,boolean>>|No
+| <<plugins-{type}s-{plugin}-proxy>> |-|No
+| <<plugins-{type}s-{plugin}-portal_name>> |<<string,string>>|Yes
+| <<plugins-{type}s-{plugin}-access_id>> |<<string,string>>|Yes
+| <<plugins-{type}s-{plugin}-access_key>> |<<string,string>>|Yes
+|=======================================================================
+
+
+
+Also see <<plugins-{type}s-{plugin}-common-options>> for a list of options supported by all
+output plugins.
+
+&nbsp;
+
+
+[id="plugins-{type}s-{plugin}-batch_size"]
+===== `batch_size`
+
+  * Value type is <<number,number>>
+  * Default value is `100`
+
+
+Event batch size to send to LM Logs. Increasing the batch size can increase throughput by reducing HTTP overhead
+
+[id="plugins-{type}s-{plugin}-message_key"]
+===== `message_key`
+
+  * Value type is <<string,string>>
+  * Default value is "message"
+
+Key that will be used by the plugin as the log message
+
+
+[id="plugins-{type}s-{plugin}-property_key"]
+===== `property_key`
+
+  * Value type is <<string,string>>
+  * Default value is "host"
+
+Key that will be used by the plugin as the system key
+
+
+[id="plugins-{type}s-{plugin}-lm_property"]
+===== `lm_property`
+
+  * Value type is <<string,string>>
+  * Default value is "system.hostname"
+
+Key that will be used by LM to match resource based on property
+
+
+[id="plugins-{type}s-{plugin}-keep_timestamp"]
+===== `keep_timestamp`
+
+  * Value type is <<boolean,boolean>>
+  * Default value is `true`
+
+Keep logstash timestamp
+
+[id="plugins-{type}s-{plugin}-timestamp_is_key"]
+===== `timestamp_is_key`
+
+  * Value type is <<boolean,boolean>>
+  * Default value is `false`
+
+
+[id="plugins-{type}s-{plugin}-debug"]
+===== `debug`
+
+  * Value type is <<boolean,boolean>>
+  * Default value is `false`
+
+Display debug logs
+
+
+[id="plugins-{type}s-{plugin}-request_timeout"]
+===== `request_timeout`
+
+  * Value type is <<number,number>>
+  * Default value is `60`
+
+Timeout (in seconds) for the entire request
+
+
+[id="plugins-{type}s-{plugin}-socket_timeout"]
+===== `socket_timeout`
+
+  * Value type is <<number,number>>
+  * Default value is `10`
+
+Timeout (in seconds) to wait for data on the socket. Default is `10s`
+
+
+[id="plugins-{type}s-{plugin}-connect_timeout"]
+===== `connect_timeout`
+
+  * Value type is <<number,number>>
+  * Default value is `10`
+
+Timeout (in seconds) to wait for a connection to be established. Default is `10s`
+
+
+[id="plugins-{type}s-{plugin}-follow_redirects"]
+===== `follow_redirects`
+
+  * Value type is <<boolean,boolean>>
+  * Default value is `true`
+
+Should redirects be followed? Defaults to `true`
+
+
+[id="plugins-{type}s-{plugin}-pool_max"]
+===== `pool_max`
+
+  * Value type is <<number,number>>
+  * Default value is `50`
+
+Max number of concurrent connections. Defaults to `50`
+
+
+[id="plugins-{type}s-{plugin}-keepalive"]
+===== `keepalive`
+
+  * Value type is <<boolean,boolean>>
+  * Default value is `true`
+
+Turn this on to enable HTTP keepalive support. We highly recommend setting `automatic_retries` to at least one with this to fix interactions with broken keepalive implementations.
+
+
+[id="plugins-{type}s-{plugin}-automatic_retries"]
+===== `automatic_retries`
+
+  * Value type is <<number,number>>
+  * Default value is `5`
+
+How many times should the client retry a failing URL. We highly recommend NOT setting this value to zero if keepalive is enabled. Some servers incorrectly end keepalives early requiring a retry!
+Note: if `retry_non_idempotent` is set only GET, HEAD, PUT, DELETE, OPTIONS, and TRACE requests will be retried.
+
+
+[id="plugins-{type}s-{plugin}-retry_non_idempotent"]
+===== `retry_non_idempotent`
+
+  * Value type is <<boolean,boolean>>
+  * Default value is `true`
+
+If `automatic_retries` is enabled this will cause non-idempotent HTTP verbs (such as POST) to be retried.
+
+
+[id="plugins-{type}s-{plugin}-validate_after_inactivity"]
+===== `validate_after_inactivity`
+
+  * Value type is <<number,number>>
+  * Default value is `200`
+
+ How long to wait before checking if the connection is stale before executing a request on a connection using keepalive.
+ You may want to set this lower, possibly to 0 if you get connection errors regularly
+
+ Quoting the Apache commons docs (this client is based Apache Commmons):
+ 
+ 'Defines period of inactivity in milliseconds after which persistent connections must be re-validated prior to being leased to the consumer. Non-positive value passed to this method disables connection validation. This check helps detect connections that have become stale (half-closed) while kept inactive in the pool.'
+
+ See https://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/conn/PoolingHttpClientConnectionManager.html#setValidateAfterInactivity(int)[these docs for more info]
+
+
+
+[id="plugins-{type}s-{plugin}-cookies"]
+===== `cookies`
+
+  * Value type is <<boolean,boolean>>
+  * Default value is `true`
+
+Enable cookie support. With this enabled the client will persist cookies
+
+across requests as a normal web browser would. Enabled by default
+
+
+[id="plugins-{type}s-{plugin}-proxy"]
+===== `proxy`
+
+  * There is no default value for 'proxy'
+
+If you'd like to use an HTTP proxy . This supports multiple configuration syntaxes:
+
+1. Proxy host in form: `http://proxy.org:1234`
+
+2. Proxy host in form: `{host => "proxy.org", port => 80, scheme => 'http', user => 'username@host', password => 'password'}`
+
+3. Proxy host in form: `{url =>  'http://proxy.org:1234', user => 'username@host', password => 'password'}`
+
+
+[id="plugins-{type}s-{plugin}-portal_name"]
+===== `portal_name`
+  * This is a required setting.
+  * Value type is <<string,string>>
+ 
+
+Logicmonitor Portal Name. 
+
+
+[id="plugins-{type}s-{plugin}-access_id"]
+===== `access_id`
+  * This is a required setting.
+  * Value type is <<string,string>>
+ 
+
+A valid Logicmonitor access id.
+
+
+[id="plugins-{type}s-{plugin}-access_key"]
+===== `access_key`
+  * This is a required setting.
+  * Value type is <<string,string>>
+ 
+Logicmonitor access key for access id.
+
+
+[id="plugins-{type}s-{plugin}-common-options"]
+include::{include_path}/{type}.asciidoc[]
+
+:default_codec!:
+
+
+
