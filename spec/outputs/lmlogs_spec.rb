@@ -6,6 +6,7 @@ require "logstash/event"
 describe LogStash::Outputs::LMLogs do
   let(:sample_event) { LogStash::Event.new("message" => "hello this is log") }
   let(:client) { @lmlogs.client }
+  let(:sample_lm_logs_event){{"message" => "hello this is log 1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => "2021-03-22T04:28:55.907121106Z"}}
 
   before do
     @lmlogs = LogStash::Outputs::LMLogs.new(
@@ -47,20 +48,14 @@ describe LogStash::Outputs::LMLogs do
     @lmlogs.multi_receive([sample_event, sample_event, sample_event, sample_event, sample_event])
   end
 
-  it "max payload exceeded test" do
+  it "max payload exceeded" do
 
-    document = [{"message" => "hello this is log 1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => "2021-03-22T04:28:55.907121106Z"},
-        {"message" => "hello this is log 2", "_lm.resourceId" => {"test.property" => "host2"}, "timestamp" => "2021-03-22T04:28:55.907321106Z"},
-        {"message" => "hello this is log 3", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.907421106Z"}
-        ]
+    document = [sample_lm_logs_event,sample_lm_logs_event]
 
-    lm_logs_event = {"message" => "hello this is log 4", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.909421106Z"}
-    document_expected = [{"message" => "hello this is log 4", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.909421106Z"}]
+    lm_logs_event = {"message" => "hello this is log 3", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.909421106Z"}
+    document_expected = [lm_logs_event]
     expect(client).to receive(:post).once.with("https://localhost.logicmonitor.com/rest/log/ingest",hash_including(:body => LogStash::Json.dump(
-        [{"message" => "hello this is log 1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => "2021-03-22T04:28:55.907121106Z"},
-        {"message" => "hello this is log 2", "_lm.resourceId" => {"test.property" => "host2"}, "timestamp" => "2021-03-22T04:28:55.907321106Z"},
-        {"message" => "hello this is log 3", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.907421106Z"}
-        ]
+        [sample_lm_logs_event,sample_lm_logs_event]
         ))).and_call_original
 
     document_result = @lmlogs.isValidPayloadSize(document,lm_logs_event,document.to_json.bytesize)
@@ -68,17 +63,11 @@ describe LogStash::Outputs::LMLogs do
   end
   it "max payload in limit" do
 
-    document = [{"message" => "hello this is log 1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => "2021-03-22T04:28:55.907121106Z"},
-        {"message" => "hello this is log 2", "_lm.resourceId" => {"test.property" => "host2"}, "timestamp" => "2021-03-22T04:28:55.907321106Z"},
-        {"message" => "hello this is log 3", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.907421106Z"}
-        ]
+    document = [sample_lm_logs_event]
 
-    lm_logs_event = {"message" => "hello this is log 4", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.909421106Z"}
+    lm_logs_event = {"message" => "hello this is log 2", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.909421106Z"}
     
-    document_expected = [{"message" => "hello this is log 1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => "2021-03-22T04:28:55.907121106Z"},
-        {"message" => "hello this is log 2", "_lm.resourceId" => {"test.property" => "host2"}, "timestamp" => "2021-03-22T04:28:55.907321106Z"},
-        {"message" => "hello this is log 3", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.907421106Z"},
-        {"message" => "hello this is log 4", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.909421106Z"}]
+    document_expected = [sample_lm_logs_event,lm_logs_event]
     expect(client).to receive(:post).exactly(0).times.and_call_original
 
     document_result = @lmlogs.isValidPayloadSize(document,lm_logs_event,document.to_json.bytesize + lm_logs_event.to_json.bytesize)
