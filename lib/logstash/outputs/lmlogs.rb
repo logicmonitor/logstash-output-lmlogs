@@ -135,17 +135,18 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
       end
 
       # Symbolize keys if necessary
-      c[:auth] = {
-          :access_id => @access_id,
-          :access_key => @access_key.value,
-          :eager => true
-      }
+      # c[:auth] = {
+      #     :user => @access_id,
+      #     :password => @access_key.value,
+      #     :eager => true
+      # }
     end
+    @logger.debug("manticore client config ", :client => c)                
+    return c
   end
 
   private
   def make_client
-    puts client_config
     Manticore::Client.new(client_config)
   end
 
