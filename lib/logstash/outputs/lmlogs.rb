@@ -98,12 +98,17 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
 
   @@MAX_PAYLOAD_SIZE = 8*1024*1024
 
+  # For developer debugging.
+  @@CONSOLE_LOGS = false
+
   public
   def register
     @total = 0
     @total_failed = 0
     logger.info("Initialized LogicMonitor output plugin with configuration",
                 :host => @host)
+    logger.info("Max Payload Size: ", 
+                :size => @@MAX_PAYLOAD_SIZE)
 
   end # def register
 
@@ -141,7 +146,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
       #     :eager => true
       # }
     end
-    @logger.debug("manticore client config ", :client => c)                
+	  log_debug("manticore client config: ", :client => c)              
     return c
   end
 
@@ -174,6 +179,8 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   end
 
   def send_batch(events)
+    log_debug("Started sending logs to LM: ", 
+                  :time => Time::now.utc)
     url = "https://" + @portal_name + ".logicmonitor.com/rest/log/ingest"
     body = events.to_json
     auth_string = generate_auth_string(body)
@@ -189,7 +196,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     request.on_success do |response|
       if response.code == 202
         @total += events.length
-        @logger.debug("Successfully sent ",
+        log_debug("Successfully sent ",
                       :response_code => response.code,
                       :batch_size => events.length,
                       :total_sent => @total,
@@ -214,10 +221,9 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
 
     request.on_failure do |exception|
       @total_failed += 1
-      log_failure("Could not access URL",
+      log_failure("The request failed. ",
                   :url => url,
                   :method => @http_method,
-                  :body => body,
                   :message => exception.message,
                   :class => exception.class.name,
                   :backtrace => exception.backtrace,
@@ -225,7 +231,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
       )
     end
 
-    @logger.debug("Sending LM Logs",
+    log_debug("Completed sending logs to LM",
                   :total => @total,
                   :time => Time::now.utc)
     request.call
@@ -234,13 +240,19 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     @logger.error("[Exception=] #{e.message} #{e.backtrace}")
   end
 
+  def log_debug(message, *opts)
+    if @@CONSOLE_LOGS
+      puts "[#{DateTime::now}] [logstash.outputs.lmlogs] [DEBUG] #{message} #{opts.to_s}"
+    elsif debug
+      @logger.debug(message, *opts)
+    end
+  end 
 
   public
   def multi_receive(events)
-    puts @@MAX_PAYLOAD_SIZE
-    if debug
-      puts events.to_json
-    end
+    if events.length() > 0
+      log_debug(events.to_json)
+	  end
 
     events.each_slice(@batch_size) do |chunk|
       documents = []
