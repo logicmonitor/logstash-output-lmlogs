@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.test_files = s.files.grep(%r{^(test|spec|features)/})
 
   # Special flag to let us know this is actually a logstash plugin
-  s.metadata = { "logstash_plugin" => "true", "logstash_group" => "output" }
+  s.metadata = { "logstash_plugin" => "true", "logstash_group" => "output" , "rubygems_mfa_required" => "false"}
 
   # Gem dependencies
   #
