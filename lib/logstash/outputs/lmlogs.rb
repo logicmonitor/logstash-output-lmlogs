@@ -257,9 +257,12 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     events.each_slice(@batch_size) do |chunk|
       documents = []
       chunk.each do |event|
-        lmlogs_event = {
-          message: event.get(@message_key).to_s
-        }
+        event_json = JSON.parse(event.to_json)
+        lmlogs_event = event_json
+        lmlogs_event.delete("@timestamp")  # remove redundant timestamp field
+        lmlogs_event["event"].delete("original") # remove redundant log field
+
+        lmlogs_event["message"] = event.get(@message_key).to_s
 
         lmlogs_event["_lm.resourceId"] = {}
         lmlogs_event["_lm.resourceId"]["#{@lm_property}"] = event.get(@property_key.to_s)
