@@ -4,7 +4,7 @@ require "logstash/outputs/lmlogs"
 require "logstash/event"
 
 describe LogStash::Outputs::LMLogs do
-  let(:sample_event) { LogStash::Event.new("message" => "hello this is log") }
+  let(:sample_event) { LogStash::Event.new("message" => "hello this is log","event" => {"sequence" => 0,"original" => "simple logstash msg from me  running with proxy settings"})}
   let(:client) { @lmlogs.client }
   let(:sample_lm_logs_event){{"message" => "hello this is log 1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => "2021-03-22T04:28:55.907121106Z"}}
 
@@ -34,12 +34,12 @@ describe LogStash::Outputs::LMLogs do
     event1 = LogStash::Event.new("message" => "hello this is log 1", "host" => "host1")
     event2 = LogStash::Event.new("message" => "hello this is log 2", "host" => "host2")
     event3 = LogStash::Event.new("message" => "hello this is log 3", "host" => "host3")
-    expect(client).to receive(:post).once.with("https://localhost.logicmonitor.com/rest/log/ingest",hash_including(:body => LogStash::Json.dump(
-        [{"message" => "hello this is log 1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => event1.timestamp.to_s},
-        {"message" => "hello this is log 2", "_lm.resourceId" => {"test.property" => "host2"}, "timestamp" => event2.timestamp.to_s},
+    expect(client).to receive(:post).once.with("https://localhost.logicmonitor.com/rest/log/ingest",:body => LogStash::Json.dump(
+        [{"message" => "hello this is log 1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => event1.timestamp.to_s,"@version":"1", "host" => "host1"},
+        {"message" => "hello this is log 2", "_lm.resourceId" => {"test.property" => "host2"}, "timestamp" => event2.timestamp.to_s,"@version":"1", "host" => "host2"},
         {"message" => "hello this is log 3", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => event3.timestamp.to_s}
         ]
-        ))).and_call_original
+        )).and_call_original
     @lmlogs.multi_receive([event1, event2, event3])
   end
 
@@ -66,7 +66,7 @@ describe LogStash::Outputs::LMLogs do
     document = [sample_lm_logs_event]
 
     lm_logs_event = {"message" => "hello this is log 2", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => "2021-03-22T04:28:55.909421106Z"}
-    
+
     document_expected = [sample_lm_logs_event,lm_logs_event]
     expect(client).to receive(:post).exactly(0).times.and_call_original
 
