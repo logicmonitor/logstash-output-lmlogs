@@ -93,12 +93,11 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   # Username to use for HTTP auth.
   config :access_id, :validate => :string, :required => true
 
+  # Include/Exclude metadata from sending to LM Logs
   config :include_metadata, :validate => :boolean, :default => true
 
   # Password to use for HTTP auth
   config :access_key, :validate => :password, :required => true
-
-  config :exclude_metadata, :validate => :array, :default => []
 
   @@MAX_PAYLOAD_SIZE = 8*1024*1024
 
