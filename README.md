@@ -33,6 +33,7 @@ output {
 | keep_timestamp | If false, LM Logs will use the ingestion timestamp as the event timestamp | true |
 | timestamp_is_key  | If true, LM Logs will use a specified key as the event timestamp | false |
 | timestamp_key | If timestamp_is_key is set, LM Logs will use this key in the event as the timestamp | "logtimestamp"  |
+| include_metadata  | If false, the metadata fields will not be sent to LM Logs  | true |
 
 See the [source code](lib/logstash/outputs/lmlogs.rb) for the full list of options
 
