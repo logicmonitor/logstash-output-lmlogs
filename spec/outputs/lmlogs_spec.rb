@@ -34,12 +34,12 @@ describe LogStash::Outputs::LMLogs do
     event1 = LogStash::Event.new("message" => "hello this is log 1", "host" => "host1")
     event2 = LogStash::Event.new("message" => "hello this is log 2", "host" => "host2")
     event3 = LogStash::Event.new("message" => "hello this is log 3", "host" => "host3")
-    expect(client).to receive(:post).once.with("https://localhost.logicmonitor.com/rest/log/ingest",:body => LogStash::Json.dump(
-        [{"message" => "hello this is log 1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => event1.timestamp.to_s,"@version":"1", "host" => "host1"},
-        {"message" => "hello this is log 2", "_lm.resourceId" => {"test.property" => "host2"}, "timestamp" => event2.timestamp.to_s,"@version":"1", "host" => "host2"},
-        {"message" => "hello this is log 3", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => event3.timestamp.to_s}
+    expect(client).to receive(:post).once.with("https://localhost.logicmonitor.com/rest/log/ingest",hash_including(:body => LogStash::Json.dump(
+        [{ "host" => "host1", "message" => "hello this is log 1","@version":"1", "_lm.resourceId" => {"test.property" => "host1"}, "timestamp" => event1.timestamp.to_s,},
+        {"host" => "host2","message" => "hello this is log 2","@version":"1", "_lm.resourceId" => {"test.property" => "host2"}, "timestamp" => event2.timestamp.to_s},
+        {"host" => "host3","message" => "hello this is log 3","@version":"1", "_lm.resourceId" => {"test.property" => "host3"}, "timestamp" => event3.timestamp.to_s}
         ]
-        )).and_call_original
+        ))).and_call_original
     @lmlogs.multi_receive([event1, event2, event3])
   end
 

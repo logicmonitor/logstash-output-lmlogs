@@ -266,7 +266,9 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
         if @include_metadata
          lmlogs_event = event_json
          lmlogs_event.delete("@timestamp")  # remove redundant timestamp field
-         lmlogs_event["event"].delete("original") # remove redundant log field
+         if lmlogs_event.dig("event", "original") != nil
+            lmlogs_event["event"].delete("original") # remove redundant log field
+         end 
         end
 
         lmlogs_event["message"] = event.get(@message_key).to_s
