@@ -93,6 +93,9 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   # Username to use for HTTP auth.
   config :access_id, :validate => :string, :required => true
 
+  # Include/Exclude metadata from sending to LM Logs
+  config :include_metadata, :validate => :boolean, :default => true
+
   # Password to use for HTTP auth
   config :access_key, :validate => :password, :required => true
 
@@ -258,12 +261,15 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
       documents = []
       chunk.each do |event|
         event_json = JSON.parse(event.to_json)
-        lmlogs_event = event_json
-        lmlogs_event.delete("@timestamp")  # remove redundant timestamp field
-        lmlogs_event["event"].delete("original") # remove redundant log field
+        lmlogs_event = {}
+
+        if @include_metadata
+         lmlogs_event = event_json
+         lmlogs_event.delete("@timestamp")  # remove redundant timestamp field
+         lmlogs_event["event"].delete("original") # remove redundant log field
+        end
 
         lmlogs_event["message"] = event.get(@message_key).to_s
-
         lmlogs_event["_lm.resourceId"] = {}
         lmlogs_event["_lm.resourceId"]["#{@lm_property}"] = event.get(@property_key.to_s)
 
