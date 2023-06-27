@@ -115,7 +115,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
                 :host => @host)
     logger.info("Max Payload Size: ",
                 :size => @@MAX_PAYLOAD_SIZE)
-
+    configure_auth
   end # def register
 
   def client_config
@@ -140,22 +140,6 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
                       @proxy
     end
 
-    if @bearer_token.value == nil && (@access_key.value == nil || @access_id == nil)
-      raise ::LogStash::ConfigurationError, "Auth credentials not provided."
-    end
-
-    if @access_id && @bearer_token.value == nil
-      if !@access_key || !@access_key.value
-        raise ::LogStash::ConfigurationError, "access_id '#{@access_id}' specified without access_key!"
-      end
-
-      # Symbolize keys if necessary
-      # c[:auth] = {
-      #     :user => @access_id,
-      #     :password => @access_key.value,
-      #     :eager => true
-      # }
-    end
     log_debug("manticore client config: ", :client => c)
     return c
   end
@@ -175,8 +159,21 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     @client.close
   end
 
+  def configure_auth
+    @use_bearer_instead_of_lmv1 = false
+    if @access_id == nil || @access_key.value == nil
+      @logger.info "Access Id or access key null. Using bearer token for authentication."
+      @use_bearer_instead_of_lmv1 = true
+    end  
+    if @use_bearer_instead_of_lmv1 && @bearer_token.value == nil 
+      @logger.error "Bearer token not specified. Either access_id and access_key both or bearer_token must be specified for authentication with Logicmonitor."
+      raise LogStash::ConfigurationError, 'No valid authentication specified. Either access_id and access_key both or bearer_token must be specified for authentication with Logicmonitor.'
+    end
+  end  
   def generate_auth_string(body)
-    if @access_id
+    if @use_bearer_instead_of_lmv1
+      return "Bearer #{@bearer_token.value}"
+    else
       timestamp = DateTime.now.strftime('%Q')
       hash_this = "POST#{timestamp}#{body}/log/ingest"
       sign_this = OpenSSL::HMAC.hexdigest(
@@ -186,9 +183,6 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
                   )
       signature = Base64.strict_encode64(sign_this)
       return "LMv1 #{@access_id}:#{signature}:#{timestamp}"
-    else
-      log_debug("Using bearer token for authentication")
-      return "Bearer " + @bearer_token.value
     end
   end
 
