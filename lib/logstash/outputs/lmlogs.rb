@@ -176,19 +176,20 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   end
 
   def generate_auth_string(body)
-    if @bearer_token.value
+    if @access_id
+      timestamp = DateTime.now.strftime('%Q')
+      hash_this = "POST#{timestamp}#{body}/log/ingest"
+      sign_this = OpenSSL::HMAC.hexdigest(
+                    OpenSSL::Digest.new('sha256'),
+                    "#{@access_key.value}",
+                    hash_this
+                  )
+      signature = Base64.strict_encode64(sign_this)
+      return "LMv1 #{@access_id}:#{signature}:#{timestamp}"
+    else
       log_debug("Using bearer token for authentication")
       return "Bearer " + @bearer_token.value
     end
-    timestamp = DateTime.now.strftime('%Q')
-    hash_this = "POST#{timestamp}#{body}/log/ingest"
-    sign_this = OpenSSL::HMAC.hexdigest(
-                  OpenSSL::Digest.new('sha256'),
-                  "#{@access_key.value}",
-                  hash_this
-                )
-    signature = Base64.strict_encode64(sign_this)
-    "LMv1 #{@access_id}:#{signature}:#{timestamp}"
   end
 
   def send_batch(events)
