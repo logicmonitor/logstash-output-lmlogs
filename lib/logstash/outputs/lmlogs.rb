@@ -30,7 +30,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
 
   # Keep logstash timestamp
   config :keep_timestamp, :validate => :boolean, :default => true
-  
+
   # Use a configured message key for timestamp values
   # Valid timestamp formats are ISO8601 strings or epoch in seconds, milliseconds or nanoseconds
   config :timestamp_is_key, :validate => :boolean, :default => false
@@ -91,13 +91,16 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   config :portal_name, :validate => :string, :required => true
 
   # Username to use for HTTP auth.
-  config :access_id, :validate => :string, :required => true
+  config :access_id, :validate => :string, :required => false, :default => nil
 
   # Include/Exclude metadata from sending to LM Logs
   config :include_metadata, :validate => :boolean, :default => true
 
   # Password to use for HTTP auth
-  config :access_key, :validate => :password, :required => true
+  config :access_key, :validate => :password, :required => false, :default => nil
+
+  # Use bearer token instead of access key/id for authentication.
+  config :bearer_token, :validate => :password, :required => false, :default => nil
 
   @@MAX_PAYLOAD_SIZE = 8*1024*1024
 
@@ -110,9 +113,9 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     @total_failed = 0
     logger.info("Initialized LogicMonitor output plugin with configuration",
                 :host => @host)
-    logger.info("Max Payload Size: ", 
+    logger.info("Max Payload Size: ",
                 :size => @@MAX_PAYLOAD_SIZE)
-
+    configure_auth
   end # def register
 
   def client_config
@@ -137,19 +140,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
                       @proxy
     end
 
-    if @access_id
-      if !@access_key || !@access_key.value
-        raise ::LogStash::ConfigurationError, "access_id '#{@access_id}' specified without access_key!"
-      end
-
-      # Symbolize keys if necessary
-      # c[:auth] = {
-      #     :user => @access_id,
-      #     :password => @access_key.value,
-      #     :eager => true
-      # }
-    end
-	  log_debug("manticore client config: ", :client => c)              
+    log_debug("manticore client config: ", :client => c)
     return c
   end
 
@@ -168,21 +159,35 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     @client.close
   end
 
-
+  def configure_auth
+    @use_bearer_instead_of_lmv1 = false
+    if @access_id == nil || @access_key.value == nil
+      @logger.info "Access Id or access key null. Using bearer token for authentication."
+      @use_bearer_instead_of_lmv1 = true
+    end  
+    if @use_bearer_instead_of_lmv1 && @bearer_token.value == nil 
+      @logger.error "Bearer token not specified. Either access_id and access_key both or bearer_token must be specified for authentication with Logicmonitor."
+      raise LogStash::ConfigurationError, 'No valid authentication specified. Either access_id and access_key both or bearer_token must be specified for authentication with Logicmonitor.'
+    end
+  end  
   def generate_auth_string(body)
-    timestamp = DateTime.now.strftime('%Q')
-    hash_this = "POST#{timestamp}#{body}/log/ingest"
-    sign_this = OpenSSL::HMAC.hexdigest(
-                  OpenSSL::Digest.new('sha256'),
-                  "#{@access_key.value}",
-                  hash_this
-                )
-    signature = Base64.strict_encode64(sign_this)
-    "LMv1 #{@access_id}:#{signature}:#{timestamp}"
+    if @use_bearer_instead_of_lmv1
+      return "Bearer #{@bearer_token.value}"
+    else
+      timestamp = DateTime.now.strftime('%Q')
+      hash_this = "POST#{timestamp}#{body}/log/ingest"
+      sign_this = OpenSSL::HMAC.hexdigest(
+                    OpenSSL::Digest.new('sha256'),
+                    "#{@access_key.value}",
+                    hash_this
+                  )
+      signature = Base64.strict_encode64(sign_this)
+      return "LMv1 #{@access_id}:#{signature}:#{timestamp}"
+    end
   end
 
   def send_batch(events)
-    log_debug("Started sending logs to LM: ", 
+    log_debug("Started sending logs to LM: ",
                   :time => Time::now.utc)
     url = "https://" + @portal_name + ".logicmonitor.com/rest/log/ingest"
     body = events.to_json
@@ -249,7 +254,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     elsif debug
       @logger.debug(message, *opts)
     end
-  end 
+  end
 
   public
   def multi_receive(events)
@@ -268,7 +273,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
          lmlogs_event.delete("@timestamp")  # remove redundant timestamp field
          if lmlogs_event.dig("event", "original") != nil
             lmlogs_event["event"].delete("original") # remove redundant log field
-         end 
+         end
         end
 
         lmlogs_event["message"] = event.get(@message_key).to_s
@@ -278,7 +283,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
         if @keep_timestamp
           lmlogs_event["timestamp"] = event.get("@timestamp")
         end
-        
+
         if @timestamp_is_key
           lmlogs_event["timestamp"] = event.get(@timestamp_key.to_s)
         end
@@ -295,10 +300,10 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   end
 
   def isValidPayloadSize(documents,lmlogs_event,max_payload_size)
-    if (documents.to_json.bytesize + lmlogs_event.to_json.bytesize) >  max_payload_size 
+    if (documents.to_json.bytesize + lmlogs_event.to_json.bytesize) >  max_payload_size
           send_batch(documents)
           documents = []
-          
+
     end
     documents.push(lmlogs_event)
     return documents
