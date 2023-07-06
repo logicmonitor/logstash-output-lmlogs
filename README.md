@@ -20,6 +20,7 @@ output {
     }
 }
 ```
+You would need either `access_id` and `access_id` both or `bearer_token` for authentication with Logicmonitor.
 
 
 
