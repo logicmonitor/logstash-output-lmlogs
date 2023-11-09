@@ -1,6 +1,14 @@
+
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require "logstash/outputs/version.rb"
+
+
+
 Gem::Specification.new do |s|
   s.name = 'logstash-output-lmlogs'
-  s.version         = '1.3.0'
+  s.version         = LmLogsLogstashPlugin::VERSION
   s.licenses = ['Apache-2.0']
   s.summary = "Logstash output plugin for LM Logs"
   s.description     = "This gem is a Logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/logstash-plugin install gemname. This gem is not a stand-alone program"

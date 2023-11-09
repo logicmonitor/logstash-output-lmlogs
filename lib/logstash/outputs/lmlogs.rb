@@ -8,6 +8,7 @@ require 'date'
 require 'base64'
 require 'openssl'
 require 'manticore'
+require_relative "version"
 
 # An example output that does nothing.
 class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
@@ -164,12 +165,12 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     if @access_id == nil || @access_key.value == nil
       @logger.info "Access Id or access key null. Using bearer token for authentication."
       @use_bearer_instead_of_lmv1 = true
-    end  
-    if @use_bearer_instead_of_lmv1 && @bearer_token.value == nil 
+    end
+    if @use_bearer_instead_of_lmv1 && @bearer_token.value == nil
       @logger.error "Bearer token not specified. Either access_id and access_key both or bearer_token must be specified for authentication with Logicmonitor."
       raise LogStash::ConfigurationError, 'No valid authentication specified. Either access_id and access_key both or bearer_token must be specified for authentication with Logicmonitor.'
     end
-  end  
+  end
   def generate_auth_string(body)
     if @use_bearer_instead_of_lmv1
       return "Bearer #{@bearer_token.value}"
@@ -196,7 +197,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
         :body => body,
         :headers => {
                 "Content-Type" => "application/json",
-                "User-Agent" => "LM Logs Logstash Plugin",
+                "User-Agent" => "lm-logs-logstash/" + LmLogsLogstashPlugin::VERSION,
                 "Authorization" => "#{auth_string}"
         }
     })
