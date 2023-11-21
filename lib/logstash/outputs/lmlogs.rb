@@ -95,13 +95,16 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   config :access_id, :validate => :string, :required => false, :default => nil
 
   # Include/Exclude metadata from sending to LM Logs
-  config :include_metadata, :validate => :boolean, :default => true
+  config :include_metadata, :validate => :boolean, :default => false
 
   # Password to use for HTTP auth
   config :access_key, :validate => :password, :required => false, :default => nil
 
   # Use bearer token instead of access key/id for authentication.
   config :bearer_token, :validate => :password, :required => false, :default => nil
+
+  # json keys for which plugin looks for these keys and adds as event meatadata. A dot "." can be used to add nested subjson.
+  config :include_metadata_keys, :validate => :array, :required => false, :default => []
 
   @@MAX_PAYLOAD_SIZE = 8*1024*1024
 
@@ -117,6 +120,14 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     logger.info("Max Payload Size: ",
                 :size => @@MAX_PAYLOAD_SIZE)
     configure_auth
+
+    @final_metadata_keys = Hash.new
+    if @include_metadata_keys.any?
+      include_metadata_keys.each do | nested_key |
+        @final_metadata_keys[nested_key] = nested_key.to_s.split('.')
+      end
+    end
+
   end # def register
 
   def client_config
@@ -266,34 +277,48 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     events.each_slice(@batch_size) do |chunk|
       documents = []
       chunk.each do |event|
-        event_json = JSON.parse(event.to_json)
-        lmlogs_event = {}
 
-        if @include_metadata
-         lmlogs_event = event_json
-         lmlogs_event.delete("@timestamp")  # remove redundant timestamp field
-         if lmlogs_event.dig("event", "original") != nil
-            lmlogs_event["event"].delete("original") # remove redundant log field
-         end
-        end
-
-        lmlogs_event["message"] = event.get(@message_key).to_s
-        lmlogs_event["_lm.resourceId"] = {}
-        lmlogs_event["_lm.resourceId"]["#{@lm_property}"] = event.get(@property_key.to_s)
-
-        if @keep_timestamp
-          lmlogs_event["timestamp"] = event.get("@timestamp")
-        end
-
-        if @timestamp_is_key
-          lmlogs_event["timestamp"] = event.get(@timestamp_key.to_s)
-        end
-
-        documents = isValidPayloadSize(documents,lmlogs_event,@@MAX_PAYLOAD_SIZE)
-
+        documents = isValidPayloadSize(documents, processEvent(event), @@MAX_PAYLOAD_SIZE)
       end
       send_batch(documents)
     end
+  end
+
+
+  def processEvent(event)
+    event_json = JSON.parse(event.to_json)
+    lmlogs_event = {}
+
+    if @include_metadata
+      lmlogs_event = event_json
+      lmlogs_event.delete("@timestamp")  # remove redundant timestamp field
+      if lmlogs_event.dig("event", "original") != nil
+        lmlogs_event["event"].delete("original") # remove redundant log field
+      end
+    elsif @final_metadata_keys
+      @final_metadata_keys.each do | key, value |
+        nestedVal = event_json
+        value.each { |x| nestedVal = nestedVal[x] }
+        if nestedVal != nil
+          lmlogs_event[key] = nestedVal
+        end
+      end
+    end
+
+    lmlogs_event["message"] = event.get(@message_key).to_s
+    lmlogs_event["_lm.resourceId"] = {}
+    lmlogs_event["_lm.resourceId"]["#{@lm_property}"] = event.get(@property_key.to_s)
+
+    if @keep_timestamp
+      lmlogs_event["timestamp"] = event.get("@timestamp")
+    end
+
+    if @timestamp_is_key
+      lmlogs_event["timestamp"] = event.get(@timestamp_key.to_s)
+    end
+
+    return lmlogs_event
+
   end
 
   def log_failure(message, opts)

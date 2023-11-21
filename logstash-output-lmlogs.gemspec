@@ -33,4 +33,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'manticore', '>= 0.5.2', '< 1.0.0'
 
   s.add_development_dependency 'logstash-devutils'
+  s.add_development_dependency 'hashdiff', '>= 1.0.0'
 end
