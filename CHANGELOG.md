@@ -16,3 +16,5 @@
 - Fix user agent populated in headers
 ## 2.0.0
 - Dont send event metadata by default. Add config include_metadata_keys for including custom metadata
+## 2.0.1
+- Fix incomplete json metadata error.

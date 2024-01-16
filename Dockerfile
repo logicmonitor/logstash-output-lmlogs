@@ -1,5 +1,5 @@
 #FROM jruby:9.3.9.0-jdk11
-FROM logstash:8.5.1 AS builder
+FROM logstash:8.11.3 AS builder
 
 FROM jruby:9.3.9.0-jdk11
 COPY --from=builder /usr/share/logstash /logstash

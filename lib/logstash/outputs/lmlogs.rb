@@ -298,7 +298,12 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     elsif @final_metadata_keys
       @final_metadata_keys.each do | key, value |
         nestedVal = event_json
-        value.each { |x| nestedVal = nestedVal[x] }
+        value.each do |x|
+          if nestedVal == nil
+            break
+          end
+          nestedVal = nestedVal[x]
+        end
         if nestedVal != nil
           lmlogs_event[key] = nestedVal
         end
