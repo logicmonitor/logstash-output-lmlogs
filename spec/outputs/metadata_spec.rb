@@ -83,4 +83,26 @@ describe LogStash::Outputs::LMLogs do
       puts " hash diff : #{Hashdiff.diff(constructed_event,expected_event)}"
       expect(Hashdiff.diff(constructed_event,expected_event)).to eq([])
     end
+
+    it "Netsted key that doesn not exist should not break" do
+      plugin = create_output_plugin_with_conf({
+        "portal_name" => "localhost",
+        "access_id" => "abcd",
+        "access_key" => "abcd",
+        "lm_property" => "system.hostname",
+        "property_key" => "host",
+        "include_metadata_keys" => %w[nested1.nested2.nestedkey_that_doesnt_exist]
+      })
+      constructed_event = plugin.processEvent(logstash_event)
+      expected_event = {
+        "message" => "hello this is log 1",
+        "timestamp" => logstash_event.timestamp,
+        "_lm.resourceId" => {"system.hostname" => "host1"}
+      }
+      puts " actual : #{constructed_event} \n expected : #{expected_event}"
+      puts " hash diff : #{Hashdiff.diff(constructed_event,expected_event)}"
+      expect(Hashdiff.diff(constructed_event,expected_event)).to eq([])
+    end
+
+
 end
