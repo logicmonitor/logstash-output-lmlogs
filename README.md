@@ -22,7 +22,7 @@ output {
 }
 ```
 You would need either `access_id` and `access_id` both or `bearer_token` for authentication with Logicmonitor. 
-The portal_domain is the domain of your LM portal. If not set the default is set to `logicmonitor.com`
+The portal_domain is the domain of your LM portal. If not set the default is set to `logicmonitor.com`. Eg if your LM portal URL is test.domain.com, portal_name should be set to "test" and portal_domain to "domain.com"
 
 
 
