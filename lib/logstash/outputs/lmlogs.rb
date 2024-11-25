@@ -91,8 +91,12 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   # LM Portal Name
   config :portal_name, :validate => :string, :required => true
 
+  # LM Portal Domain. Default will be logicmonitor.com
+  config :portal_domain, :validate => :string, :required => false, :default => "logicmonitor.com"
+
   # Username to use for HTTP auth.
   config :access_id, :validate => :string, :required => false, :default => nil
+
 
   # Include/Exclude metadata from sending to LM Logs
   config :include_metadata, :validate => :boolean, :default => false
@@ -120,6 +124,11 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     logger.info("Max Payload Size: ",
                 :size => @@MAX_PAYLOAD_SIZE)
     configure_auth
+
+    # Check if `portal_domain` is an empty string and set the default value
+    if @portal_domain.nil? || @portal_domain.strip.empty?
+      @portal_domain = "logicmonitor.com"
+    end
 
     @final_metadata_keys = Hash.new
     if @include_metadata_keys.any?
@@ -201,7 +210,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   def send_batch(events)
     log_debug("Started sending logs to LM: ",
                   :time => Time::now.utc)
-    url = "https://" + @portal_name + ".logicmonitor.com/rest/log/ingest"
+    url = "https://" + @portal_name + "." + @portal_domain +"/rest/log/ingest"
     body = events.to_json
     auth_string = generate_auth_string(body)
     request = client.post(url, {

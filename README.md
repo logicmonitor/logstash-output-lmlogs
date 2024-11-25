@@ -15,12 +15,14 @@ Run the following on your Logstash instance
 output {
     lmlogs {
         portal_name => "your company name"
+        portal_domain => "your LM company domain."
         access_id => "your lm access id"
         access_key => "your access key"
     }
 }
 ```
-You would need either `access_id` and `access_id` both or `bearer_token` for authentication with Logicmonitor.
+You would need either `access_id` and `access_id` both or `bearer_token` for authentication with Logicmonitor. 
+The portal_domain is the domain of your LM portal. If not set the default is set to `logicmonitor.com`. Eg if your LM portal URL is `https://test.domain.com`, portal_name should be set to `test` and portal_domain to `domain.com`
 
 
 
