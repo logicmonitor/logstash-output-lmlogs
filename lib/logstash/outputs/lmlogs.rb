@@ -115,6 +115,8 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   # For developer debugging.
   @@CONSOLE_LOGS = false
 
+  ALLOWED_DOMAINS = ["logicmonitor.com", "lmgov.us", "qa-lmgov.us"]
+
   public
   def register
     @total = 0
@@ -129,6 +131,11 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     if @portal_domain.nil? || @portal_domain.strip.empty?
       @portal_domain = "logicmonitor.com"
     end
+
+     unless ALLOWED_DOMAINS.include?(@portal_domain)
+          raise LogStash::ConfigurationError, "Invalid portal_domain: #{@portal_domain}. Allowed values are: #{ALLOWED_DOMAINS.join(', ')}"
+     end
+     log_debug("Setting LM portal domain ", :portal_domain => portal_domain)
 
     @final_metadata_keys = Hash.new
     if @include_metadata_keys.any?
