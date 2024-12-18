@@ -308,6 +308,7 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     if @include_metadata
       lmlogs_event = event_json
       lmlogs_event.delete("@timestamp")  # remove redundant timestamp field
+      lmlogs_event["_resource.type"]="Logstash"
       if lmlogs_event.dig("event", "original") != nil
         lmlogs_event["event"].delete("original") # remove redundant log field
       end
