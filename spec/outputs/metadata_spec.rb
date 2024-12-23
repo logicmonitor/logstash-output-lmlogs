@@ -44,8 +44,7 @@ describe LogStash::Outputs::LMLogs do
       expected_event = {
         "message" => "hello this is log 1",
         "timestamp" => logstash_event.timestamp,
-        "_lm.resourceId" => {"system.hostname" => "host1"},
-
+        "_lm.resourceId" => {"system.hostname" => "host1"}
       }
       puts " actual : #{constructed_event} \n expected : #{expected_event}"
 
@@ -77,7 +76,8 @@ describe LogStash::Outputs::LMLogs do
         "nested" => {"nested2" => {"nested3" => "value",
                                 "nested3b" => "value"},
                     "nested_ignored" => "somevalue"
-                  }
+                  },
+        "_resource.type"=>"Logstash"
       }
       puts " actual : #{constructed_event} \n expected : #{expected_event}"
       puts " hash diff : #{Hashdiff.diff(constructed_event,expected_event)}"
