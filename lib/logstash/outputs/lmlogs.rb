@@ -110,6 +110,9 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
   # json keys for which plugin looks for these keys and adds as event meatadata. A dot "." can be used to add nested subjson.
   config :include_metadata_keys, :validate => :array, :required => false, :default => []
 
+  # Customised resource_type to map logs to existing LM resources
+  config :resource_type, :validate => :string, :required => false
+
   @@MAX_PAYLOAD_SIZE = 8*1024*1024
 
   # For developer debugging.
@@ -308,7 +311,10 @@ class LogStash::Outputs::LMLogs < LogStash::Outputs::Base
     if @include_metadata
       lmlogs_event = event_json
       lmlogs_event.delete("@timestamp")  # remove redundant timestamp field
-      lmlogs_event["_resource.type"]="Logstash"
+      unless @resource_type.to_s.strip.empty?
+        lmlogs_event["_resource.type"] = @resource_type
+      end
+
       if lmlogs_event.dig("event", "original") != nil
         lmlogs_event["event"].delete("original") # remove redundant log field
       end

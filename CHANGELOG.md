@@ -18,3 +18,11 @@
 - Dont send event metadata by default. Add config include_metadata_keys for including custom metadata
 ## 2.0.1
 - Fix incomplete json metadata error.
+## 2.0.2
+- Added domain support for GovCloud
+## 2.0.3
+- Added validation for domain support
+## 2.0.4
+- Added resource type in metadata.
+## 2.0.5
+- Added support for customizable resource type.
